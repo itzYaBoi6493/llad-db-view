@@ -81,6 +81,9 @@ int main(int argc, char *argv[]) {
 		list_employees(dbhdr, employees);
 	}
 	printf("db header write status = %d\n", output_file(dbfd, dbhdr, employees));
+
+	free(dbhdr);
+	free(employees);
 	return 0;
 }
 
