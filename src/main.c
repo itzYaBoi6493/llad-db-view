@@ -9,7 +9,6 @@
 #include "parse.h"
 
 void print_usage(char **argv);
-int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *addstring);
 
 int main(int argc, char *argv[]) {
 	char *filepath = NULL;
@@ -72,9 +71,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 	if (addstring) {
-		dbhdr->count++;
-		employees = realloc(employees, dbhdr->count * sizeof(struct employee_t));
-		add_employee(dbhdr, employees, addstring);
+		add_employee(dbhdr, &employees, addstring);
 	}
 	printf("db header write status = %d\n", output_file(dbfd, dbhdr, employees));
 	return 0;
@@ -84,16 +81,7 @@ void print_usage(char *argv[]) {
 	printf("Usage: %s -n -f <database file>\n", argv[0]);
 	printf("\t -n - create new database file\n");
 	printf("\t -f - (required) path to database file\n");
+	printf("\t -l - list the employees\n");
+	printf("\t -a - add via CSV list of (name, address, hours)\n");
 }
 
-int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *addstring) {
-	char *name = strtok(addstring, ",");
-	char *addr = strtok(NULL, ",");
-	char *hours = strtok(NULL, ",");
-
-	strncpy(employees[dbhdr->count-1].name, name, sizeof(employees[dbhdr->count-1].name));
-	strncpy(employees[dbhdr->count-1].address, addr, sizeof(employees[dbhdr->count-1].address));
-	
-	employees[dbhdr->count-1].hours = atoi(hours);
-	return STATUS_SUCCESS;
-}

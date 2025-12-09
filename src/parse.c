@@ -123,3 +123,31 @@ int read_employees(int fd, struct dbheader_t *header, struct employee_t **employ
 	*employeesOut = employees;
 	return STATUS_SUCCESS;
 }
+
+int add_employee(struct dbheader_t *dbhdr, struct employee_t **employees, char *addstring) {
+	if (!addstring || !dbhdr || !employees) {
+		return STATUS_ERROR;
+	}
+
+	char *name = strtok(addstring, ",");
+	if (!name) return STATUS_ERROR;
+	char *addr = strtok(NULL, ",");
+	if (!addr) return STATUS_ERROR;
+	char *hours = strtok(NULL, ",");
+	if (!hours) return STATUS_ERROR;
+
+	struct employee_t *e = *employees;
+	e = realloc(e, sizeof(struct employee_t) * (dbhdr->count + 1));
+	if (!e) {
+		return STATUS_ERROR;
+	}
+	dbhdr->count++;
+
+	strncpy(e[dbhdr->count-1].name, name, sizeof(e[dbhdr->count-1].name) - 1);
+	strncpy(e[dbhdr->count-1].address, addr, sizeof(e[dbhdr->count-1].address) - 1);
+	e[dbhdr->count-1].hours = atoi(hours);
+
+	*employees = e;
+
+	return STATUS_SUCCESS;
+}
