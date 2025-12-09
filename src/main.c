@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <getopt.h>
 
 #include "common.h"
@@ -7,21 +9,27 @@
 #include "parse.h"
 
 void print_usage(char **argv);
+int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *addstring);
 
 int main(int argc, char *argv[]) {
 	char *filepath = NULL;
+	char *addstring = NULL;
 	int c;
 	bool newfile = false;
 	int dbfd = -1;
 	struct dbheader_t *dbhdr = NULL;
+	struct employee_t *employees = NULL;
 
-	while ((c = getopt(argc, argv, "nf:")) != -1) {
+	while ((c = getopt(argc, argv, "nf:a:")) != -1) {
 		switch (c) {
 		case 'n':
 			newfile = true;
 			break;
 		case 'f':
 			filepath = optarg;
+			break;
+		case 'a':
+			addstring = optarg;
 			break;
 		case '?':
 			printf("Unknown option -%c\n", c);
@@ -58,7 +66,17 @@ int main(int argc, char *argv[]) {
 			return -1;
 		}
 	}
-	printf("db header write status = %d\n", output_file(dbfd, dbhdr, NULL));
+
+	if (read_employees(dbfd, dbhdr, &employees) != STATUS_SUCCESS) {
+		printf("Failed to read employees");
+		return 0;
+	}
+	if (addstring) {
+		dbhdr->count++;
+		employees = realloc(employees, dbhdr->count * sizeof(struct employee_t));
+		add_employee(dbhdr, employees, addstring);
+	}
+	printf("db header write status = %d\n", output_file(dbfd, dbhdr, employees));
 	return 0;
 }
 
@@ -66,4 +84,16 @@ void print_usage(char *argv[]) {
 	printf("Usage: %s -n -f <database file>\n", argv[0]);
 	printf("\t -n - create new database file\n");
 	printf("\t -f - (required) path to database file\n");
+}
+
+int add_employee(struct dbheader_t *dbhdr, struct employee_t *employees, char *addstring) {
+	char *name = strtok(addstring, ",");
+	char *addr = strtok(NULL, ",");
+	char *hours = strtok(NULL, ",");
+
+	strncpy(employees[dbhdr->count-1].name, name, sizeof(employees[dbhdr->count-1].name));
+	strncpy(employees[dbhdr->count-1].address, addr, sizeof(employees[dbhdr->count-1].address));
+	
+	employees[dbhdr->count-1].hours = atoi(hours);
+	return STATUS_SUCCESS;
 }

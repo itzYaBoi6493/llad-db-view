@@ -75,19 +75,51 @@ int output_file(int fd, struct dbheader_t *header, struct employee_t *employees)
 		return STATUS_ERROR;
 	}
 
-	if (!employees) {
-		printf("employees NULL");
-	} else {
-		printf("employees NOT NULL");
-	}
+	printf("header->count before conv = %x\n", header->count);
+	int realcount = header->count;
 
 	header->magic = htonl(header->magic);
-	header->filesize = htonl(header->filesize);
+	header->filesize = htonl(sizeof(struct dbheader_t) + realcount * sizeof(struct employee_t));
 	header->count = htons(header->count);
+	printf("header->count after conv = %x\n", header->count);
 	header->version = htons(header->version);
 
 	lseek(fd, 0, SEEK_SET);
 
 	write(fd, header, sizeof(struct dbheader_t));
+
+	int i = 0;
+	for (; i < realcount; i++) {
+		employees[i].hours = htonl(employees[i].hours);
+		write(fd, &employees[i], sizeof(struct employee_t));
+	}
+	return STATUS_SUCCESS;
+}
+
+
+int read_employees(int fd, struct dbheader_t *header, struct employee_t **employeesOut) {
+	if (fd < 0) {
+		printf("Got a bad fd\n");
+		return STATUS_ERROR;
+	}
+
+	int count = header->count;
+
+	struct employee_t *employees = calloc(count, sizeof(struct employee_t));
+
+	if (!employees) {
+		printf("malloc failed\n");
+		return STATUS_ERROR;
+	}
+	// lseek(fd, sizeof(struct dbheader_t), SEEK_SET);
+	
+	read(fd, employees, count * sizeof(struct employee_t));
+
+	int i = 0;
+	for (; i < count; i++) {
+		employees[i].hours = ntohl(employees[i].hours);
+	}
+
+	*employeesOut = employees;
 	return STATUS_SUCCESS;
 }
