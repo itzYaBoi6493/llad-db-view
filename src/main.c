@@ -15,11 +15,12 @@ int main(int argc, char *argv[]) {
 	char *addstring = NULL;
 	int c;
 	bool newfile = false;
+	bool list = false;
 	int dbfd = -1;
 	struct dbheader_t *dbhdr = NULL;
 	struct employee_t *employees = NULL;
 
-	while ((c = getopt(argc, argv, "nf:a:")) != -1) {
+	while ((c = getopt(argc, argv, "nlf:a:")) != -1) {
 		switch (c) {
 		case 'n':
 			newfile = true;
@@ -29,6 +30,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'a':
 			addstring = optarg;
+			break;
+		case 'l':
+			list = true;
 			break;
 		case '?':
 			printf("Unknown option -%c\n", c);
@@ -72,6 +76,9 @@ int main(int argc, char *argv[]) {
 	}
 	if (addstring) {
 		add_employee(dbhdr, &employees, addstring);
+	}
+	if (list) {
+		list_employees(dbhdr, employees);
 	}
 	printf("db header write status = %d\n", output_file(dbfd, dbhdr, employees));
 	return 0;
